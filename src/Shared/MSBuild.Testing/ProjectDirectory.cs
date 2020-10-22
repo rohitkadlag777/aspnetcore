@@ -162,7 +162,7 @@ $@"<Project>
                 
                 if (isHelix)
                 {
-                    files.Add("eng\Versions.props");
+                    files.Add("eng\\Versions.props");
                 }
                 
 
