@@ -158,7 +158,7 @@ $@"<Project>
             void CopyRepositoryAssets(string repositoryRoot, string projectRoot)
             {
                 var files = new List<string>() { "global.json", "NuGet.config" };
-                var isHelix = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("helix"))
+                var isHelix = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("helix"));
                 
                 if (isHelix)
                 {
