@@ -157,11 +157,18 @@ $@"<Project>
 
             void CopyRepositoryAssets(string repositoryRoot, string projectRoot)
             {
-                var files = new[] { "global.json", "NuGet.config" };
+                var files = new List<string>() { "global.json", "NuGet.config" };
+                var isHelix = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("helix"))
+                
+                if (isHelix)
+                {
+                    files.Add("eng\Versions.props");
+                }
+                
 
                 foreach (var file in files)
                 {
-                    var path = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("helix")) ? repositoryRoot : Directory.GetCurrentDirectory();
+                    var path = !isHelix ? repositoryRoot : Directory.GetCurrentDirectory();
                     var srcFile = Path.Combine(path, file);
                     var destinationFile = Path.Combine(projectRoot, file);
                     Console.WriteLine($"srcFile: {srcFile}");
