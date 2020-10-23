@@ -51,7 +51,7 @@ namespace Microsoft.DotNet.Watcher.Internal
             _buildFlags = InitializeArgs(FindTargetsFile(), trace);
         }
 
-        public async Task<IFileSet> CreateAsync(CancellationToken cancellationToken)
+        public async Task<FileSet> CreateAsync(CancellationToken cancellationToken)
         {
             var watchList = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             try
@@ -91,18 +91,42 @@ namespace Microsoft.DotNet.Watcher.Internal
                         var fileset = new FileSet(
                             isNetCoreApp31OrNewer,
                             lines.Skip(1)
-                                .Select(l => l?.Trim())
-                                .Where(l => !string.IsNullOrEmpty(l)));
+                                .Where(l => !string.IsNullOrWhiteSpace(l))
+                                .Select(l =>
+                                {
+                                    var token1 = l.IndexOf("||", StringComparison.Ordinal);
+
+                                    if (token1 != -1)
+                                    {
+                                        var token2 = l.IndexOf("||", token1 + 2, StringComparison.Ordinal);
+                                        Debug.Assert(token2 != -1);
+
+                                        var fileName = l.Substring(0, token1).Trim();
+
+                                        var watchActionString = l.AsSpan(token1 + 2, token2 - token1 - 2).Trim();
+
+                                        var watchAction = watchActionString.Equals("BrowserRefresh", StringComparison.Ordinal) ?
+                                            WatchAction.RefreshBrowser :
+                                            WatchAction.Default;
+
+                                        var webAssetPath = l.Substring(token2 + 2);
+
+                                        return new FileItem(fileName, watchAction, webAssetPath);
+                                    }
+
+                                    return new FileItem(l.Trim());
+                                }));
+
 
                         _reporter.Verbose($"Watching {fileset.Count} file(s) for changes");
 #if DEBUG
 
                         foreach (var file in fileset)
                         {
-                            _reporter.Verbose($"  -> {file}");
+                            _reporter.Verbose($"  -> {file.Name} {file.WatchAction}.");
                         }
 
-                        Debug.Assert(fileset.All(Path.IsPathRooted), "All files should be rooted paths");
+                        Debug.Assert(fileset.All(f => Path.IsPathRooted(f.Name)), "All files should be rooted paths");
 #endif
 
                         return fileset;
@@ -128,7 +152,7 @@ namespace Microsoft.DotNet.Watcher.Internal
                     {
                         _reporter.Warn("Fix the error to continue or press Ctrl+C to exit.");
 
-                        var fileSet = new FileSet(false, new[] { _projectFile });
+                        var fileSet = new FileSet(false, new[] { new FileItem(_projectFile) });
 
                         using (var watcher = new FileSetWatcher(fileSet, _reporter))
                         {

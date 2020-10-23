@@ -19,7 +19,8 @@ them to a file.
 
     <ItemGroup>
       <_WatchListLine Include="$(_IsMicrosoftNETCoreApp31OrNewer)" />
-      <_WatchListLine Include="%(Watch.FullPath)" />
+      <_WatchListLine Include="%(Watch.FullPath)" Condition="'%(Watch.WatchAction)'==''" />
+      <_WatchListLine Include="%(Watch.FullPath)||%(Watch.WatchAction)||%(Watch.StaticWebAssetPath)" Condition="'%(Watch.WatchAction)'!=''" />
     </ItemGroup>
 
     <WriteLinesToFile Overwrite="true"
@@ -68,6 +69,11 @@ Returns: @(Watch)
     <ItemGroup>
       <Watch Include="%(Compile.FullPath)" Condition="'%(Compile.Watch)' != 'false'" />
       <Watch Include="%(EmbeddedResource.FullPath)" Condition="'%(EmbeddedResource.Watch)' != 'false'"/>
+      <Watch Include="%(Content.FullPath)"
+             Condition="'%(Content.Watch)' != 'false' AND $([System.String]::Copy('%(Identity)').Replace('\','/').StartsWith('wwwroot/'))"
+             WatchAction="BrowserRefresh"
+             StaticWebAssetPath="$([System.String]::Copy('%(Identity)').Replace('\','/').Substring(8))" />
+      
       <Watch Include="$(MSBuildProjectFullPath)" />
       <_WatchProjects Include="%(ProjectReference.Identity)" Condition="'%(ProjectReference.Watch)' != 'false'" />
     </ItemGroup>
