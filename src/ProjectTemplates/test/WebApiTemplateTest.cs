@@ -59,12 +59,20 @@ namespace Templates.Test
             var buildResult = await project.RunDotNetBuildAsync();
             Assert.True(0 == buildResult.ExitCode, ErrorMessages.GetFailedProcessMessage("build", project, buildResult));
 
-            using var aspNetProcess = project.StartBuiltProjectAsync();
-            Assert.False(
-                aspNetProcess.Process.HasExited,
-                ErrorMessages.GetFailedProcessMessageOrEmpty("Run built project", project, aspNetProcess.Process));
+            try
+            {
+                using var aspNetProcess = project.StartBuiltProjectAsync();
+                Assert.False(
+                    aspNetProcess.Process.HasExited,
+                    ErrorMessages.GetFailedProcessMessageOrEmpty("Run built project", project, aspNetProcess.Process));
 
-            await aspNetProcess.AssertNotFound("swagger");
+                await aspNetProcess.AssertNotFound("swagger");
+            }
+            catch
+            {
+                project.CaptureBinLog();
+                throw;
+            }
         }
 
         private async Task<Project> PublishAndBuildWebApiTemplate(string languageOverride, string auth, string[] args)

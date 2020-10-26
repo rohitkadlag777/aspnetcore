@@ -416,7 +416,15 @@ namespace Templates.Test.Helpers
 
         private void CaptureBinLogOnFailure(ProcessEx result)
         {
-            if (result.ExitCode != 0 && !string.IsNullOrEmpty(ArtifactsLogDir))
+            if (result.ExitCode != 0)
+            {
+                CaptureBinLog();
+            }
+        }
+
+        public void CaptureBinLog()
+        {
+            if (!string.IsNullOrEmpty(ArtifactsLogDir))
             {
                 var sourceFile = Path.Combine(TemplateOutputDir, "msbuild.binlog");
                 Assert.True(File.Exists(sourceFile), $"Log for '{ProjectName}' not found in '{sourceFile}'.");
